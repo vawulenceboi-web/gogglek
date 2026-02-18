@@ -1,10 +1,19 @@
 {
   "version": 2,
-  "functions": {
-    "api/workspace_capture.js": { "runtime": "nodejs18.x" }
-  },
-  "rewrites": [
-    { "source": "/api/workspace_capture", "destination": "/api/workspace_capture.js" },
-    { "source": "/(.*)", "destination": "/index.html" }
+  "builds": [
+    {
+      "src": "api/workspace_capture.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/workspace_capture",
+      "dest": "/api/workspace_capture.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
   ]
 }

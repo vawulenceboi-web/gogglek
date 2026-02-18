@@ -58,3 +58,4 @@ module.exports = async (req, res) => {
 
   res.json({ status: 'captured ✅', email: data.email, cookies_saved: true });
 };
+ 
