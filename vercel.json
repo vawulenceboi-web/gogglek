@@ -1,16 +1,7 @@
 {
   "version": 2,
-  "builds": [
-    { "src": "api/workspace_capture.js", "use": "@vercel/node" }
-  ],
   "routes": [
-    {
-      "src": "/workspace_capture.php",
-      "dest": "/api/workspace_capture.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
-    }
+    { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
