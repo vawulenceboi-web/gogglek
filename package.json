@@ -1,13 +1,11 @@
 {
   "name": "workspace-phish",
   "version": "1.0.0",
-  "type": "module",
+  "type": "commonjs",
   "dependencies": {
     "nodemailer": "^6.9.13"
   },
   "scripts": {
-    "dev": "vercel dev",
-    "build": "echo 'Static files ready'",
-    "deploy": "vercel --prod"
+    "dev": "vercel dev"
   }
 }
