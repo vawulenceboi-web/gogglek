@@ -1,5 +1,3 @@
-const nextConfig = {
-  output: undefined,
-};
+const nextConfig = {};
 
 module.exports = nextConfig;
