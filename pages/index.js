@@ -139,9 +139,10 @@ export default function Home() {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
         }
+        .email-step { display: none; }
+        .email-step.active { display: block; }
         .password-step { display: none; }
         .password-step.active { display: block; }
-        .email-step.active { display: block; }
       `}</style>
 
       <main className="page">

