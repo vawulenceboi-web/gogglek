@@ -20,7 +20,7 @@ export default async function handler(req, res) {
   } catch {}
 
   // GMAIL EMAIL
-  const transporter = nodemailer.createTransporter({
+  nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 587,
     secure: false,
