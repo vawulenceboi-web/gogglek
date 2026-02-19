@@ -1,8 +1,9 @@
 export default function Home() {
   return (
     <>
+      <div>Hello World</div>
+
       <style jsx global>{`
-        /* YOUR EXACT CSS + INLINE STYLES */
         .loading-overlay {
           position: fixed;
           top: 0;
@@ -34,7 +35,7 @@ export default function Home() {
         .email-step { display: block; }
         /* ADD YOUR styles.css HERE */
         body { margin: 0; font-family: 'Roboto', sans-serif; }
-        /* ... rest of styles.css ... */
+        }
       `}</style>
       
       <main className="page">
