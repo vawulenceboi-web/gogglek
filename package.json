@@ -8,6 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "form-data": "^4.0.5",
     "next": "14.2.3",
     "nodemailer": "^6.9.13",
     "pdf-lib": "^1.17.1",
